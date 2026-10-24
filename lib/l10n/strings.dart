@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 
 import '../course/course.dart';
 import '../morse/keyer.dart';
+import '../morse/tone_generator.dart';
+import '../qso/qso_engine.dart';
 import '../services/settings.dart';
 
 /// Languages the app speaks.
@@ -71,7 +73,12 @@ class S {
   String get quit => _t('Quit', 'خروج');
   String get receive => _t('Receive', 'دریافت');
   String get send => _t('Send', 'ارسال');
-  String trackLabel(Track t) => t == Track.receive ? receive : send;
+  String trackLabel(Track t) => switch (t) {
+    Track.receive => receive,
+    Track.send => send,
+    Track.nato => nato,
+  };
+  String get nato => _t('NATO', 'ناتو');
   String get settings => _t('Settings', 'تنظیمات');
   String get statistics => _t('Statistics', 'آمار');
   String get correct => _t('Correct!', 'درسته!');
@@ -108,6 +115,15 @@ class S {
           'Words' => 'کلمات',
           'Callsigns' => 'شناسه‌های رادیویی',
           'Sentences' => 'جمله‌ها',
+          'Similar sounds' => 'صداهای مشابه',
+          'Mixed review' => 'مرور ترکیبی',
+          'Radio words' => 'کلمات رادیویی',
+          'QSO practice' => 'تمرین ارتباط (QSO)',
+          'Alphabet A–I' => 'الفبای A تا I',
+          'Alphabet J–R' => 'الفبای J تا R',
+          'Alphabet S–Z' => 'الفبای S تا Z',
+          'Spelling' => 'هجی کردن',
+          'Decoding' => 'رمزگشایی',
           _ => section,
         };
 
@@ -144,6 +160,39 @@ class S {
       'Copy stations from around the world',
       'ایستگاه‌هایی از سراسر دنیا',
     ),
+    'Similar sounds' => _t(
+      'Easily confused letters, side by side',
+      'حروفی که راحت با هم اشتباه می‌شوند، کنار هم',
+    ),
+    'Mixed review' => _t(
+      'Everything so far, shuffled together',
+      'همهٔ آموخته‌ها، درهم و مخلوط',
+    ),
+    'Radio words' => _t(
+      'Words from the airwaves and old radio manuals',
+      'کلماتی از دل امواج و کتاب‌های قدیمی رادیو',
+    ),
+    'Alphabet A–I' => _t(
+      'ALFA, BRAVO, CHARLIE and friends',
+      'آلفا، براوو، چارلی و دوستانشان',
+    ),
+    'Alphabet J–R' => _t('From JULIETT to ROMEO', 'از جولیت تا رومیو'),
+    'Alphabet S–Z' => _t(
+      'SIERRA to ZULU, then the whole alphabet',
+      'از سی‌یرا تا زولو، بعد کل الفبا',
+    ),
+    'Spelling' => _t(
+      'Spell words and callsigns like on air',
+      'کلمات و شناسه‌ها را مثل روی موج هجی کن',
+    ),
+    'Decoding' => _t(
+      'Turn code words back into text',
+      'کدواژه‌ها را دوباره به متن تبدیل کن',
+    ),
+    'QSO practice' => _t(
+      'Real contact phrases, from CQ to 73',
+      'عبارت‌های واقعی یک ارتباط، از CQ تا ۷۳',
+    ),
     _ => _t('Real messages, start to finish', 'پیام‌های واقعی، از اول تا آخر'),
   };
 
@@ -167,6 +216,24 @@ class S {
       'Full calls' => 'شناسه‌های کامل',
       'Portable calls' => 'شناسه‌های سیار',
       'Sentences' => 'جمله‌ها',
+      'Number groups' => 'گروه‌های عددی',
+      'Letters & numbers' => 'حروف و اعداد',
+      'Everything' => 'همه چیز',
+      'Marathon words' => 'کلمات ماراتنی',
+      'Radio words' => 'کلمات رادیویی',
+      'Mobile calls' => 'شناسه‌های متحرک',
+      'DX calls' => 'شناسه‌های دوردست',
+      'Call pairs' => 'جفت شناسه‌ها',
+      'QSO openers' => 'شروع ارتباط',
+      'Signal reports' => 'گزارش سیگنال',
+      'Names & places' => 'نام‌ها و مکان‌ها',
+      'Rigs & weather' => 'دستگاه و آب‌وهوا',
+      'Sign-offs' => 'خداحافظی',
+      'Full QSO' => 'ارتباط کامل',
+      'Whole alphabet' => 'کل الفبا',
+      'Spell callsigns' => 'هجی شناسه‌ها',
+      'Decode words' => 'رمزگشایی کلمات',
+      'Decode callsigns' => 'رمزگشایی شناسه‌ها',
       _ => null,
     };
     if (name == null) return title;
@@ -612,6 +679,9 @@ class S {
     return _codeMeaningsFa[code] ?? english;
   }
 
+  /// Persian meaning of a code from the chart, if there is one.
+  String? persianCodeMeaning(String code) => _codeMeaningsFa[code];
+
   static const _codeMeaningsFa = {
     'QRL': 'این فرکانس در حال استفاده است؟',
     'QRM': 'تداخل از ایستگاه‌های دیگر',
@@ -667,6 +737,64 @@ class S {
     '88': 'عشق و بوسه',
     '5NN': 'گزارش مسابقه‌ای ۵۹۹',
     'BK': 'وقفه',
+    'ABT': 'درباره',
+    'ADR': 'نشانی',
+    'AGE': 'سن',
+    'ANS': 'پاسخ',
+    'B4': 'قبل از',
+    'BCNU': 'می‌بینمت',
+    'BTR': 'بهتر',
+    'BTU': 'برگشت به تو',
+    'CFM': 'تأیید',
+    'CL': 'بستن ایستگاه',
+    'CLG': 'در حال فراخوان',
+    'CONDX': 'شرایط انتشار',
+    'CPY': 'دریافت',
+    'CUAGN': 'دوباره می‌بینمت',
+    'CW': 'موج پیوسته (مورس)',
+    'DR': 'عزیز',
+    'DX': 'ایستگاه دوردست',
+    'ENUF': 'کافی',
+    'FER': 'برای',
+    'FREQ': 'فرکانس',
+    'GD': 'خوب',
+    'GL': 'موفق باشی',
+    'GUD': 'خوب',
+    'HI': 'خنده',
+    'HPE': 'امیدوارم',
+    'HVY': 'سنگین',
+    'INFO': 'اطلاعات',
+    'MNI': 'بسیار',
+    'MSG': 'پیام',
+    'N': 'نه',
+    'NR': 'شماره / نزدیک',
+    'NW': 'اکنون',
+    'OB': 'رفیق قدیمی',
+    'OP': 'اپراتور',
+    'OT': 'پیشکسوت',
+    'RCVR': 'گیرنده',
+    'RFI': 'تداخل رادیویی',
+    'RPT': 'تکرار / گزارش',
+    'RX': 'گیرنده',
+    'SIG': 'سیگنال',
+    'SKED': 'قرار ارتباط',
+    'SRI': 'ببخشید',
+    'STN': 'ایستگاه',
+    'SUM': 'مقداری',
+    'SWL': 'شنوندهٔ موج کوتاه',
+    'TEMP': 'دما',
+    'TKS': 'ممنون',
+    'TMW': 'فردا',
+    'TRX': 'فرستنده‌گیرنده',
+    'TX': 'فرستنده',
+    'U': 'تو',
+    'VY': 'خیلی',
+    'WID': 'با',
+    'WKD': 'ارتباط گرفته شد',
+    'WL': 'خب / خواهد',
+    'WPM': 'کلمه در دقیقه',
+    'XYL': 'همسر',
+    'YRS': 'سال‌ها / ارادتمند',
     '<AR>': 'پایان پیام',
     '<SK>': 'پایان ارتباط',
     '<BT>': 'جداکننده / پاراگراف جدید',
@@ -738,6 +866,24 @@ class S {
     'دریافت را سخت‌تر می‌کند. ۱۰ تا ۲۰٪ هم کمک می‌کند هدفون بلوتوثی '
         'اولین صداها را نبُرد.',
   );
+  String get radioNoise => _t('Radio noise', 'نویز رادیویی');
+  String get noiseWhite => _t('White', 'سفید');
+  String get noisePink => _t('Pink', 'صورتی');
+  String get noiseReceiver => _t('Receiver', 'گیرنده');
+  String get noiseIntensity => _t('Intensity', 'شدت');
+  String get noiseOff => _t('Off', 'خاموش');
+  String get hearIt => _t('Hear it', 'بشنو');
+  String noiseTypeBlurb(NoiseType t) => switch (t) {
+    NoiseType.white => _t('Bright, even hiss', 'خش‌خش روشن و یکنواخت'),
+    NoiseType.pink => _t(
+      'Softer, deeper band noise',
+      'نویز موج، نرم‌تر و بم‌تر',
+    ),
+    NoiseType.receiver => _t(
+      'Shaped like a receiver’s speaker',
+      'شبیه بلندگوی یک گیرنده',
+    ),
+  };
   String get interfaceSounds => _t('Interface sounds', 'صداهای رابط');
   String get interfaceSoundsSub =>
       _t('Chimes for right and wrong answers', 'زنگ برای جواب‌های درست و غلط');
@@ -814,6 +960,166 @@ class S {
       'مثل حالت A، به‌علاوهٔ یک علامت اضافه هنگام رها کردن.',
     ),
   };
+
+  // --- QSO practice --------------------------------------------------------
+
+  String get onTheAir => _t('On the air', 'روی موج');
+  String get onTheAirBlurb => _t(
+    'Make a real-feeling CW contact with a friendly operator. Dit will coach you.',
+    'یک ارتباط مورس واقعی‌نما با یک اپراتور خوش‌برخورد. دیت راهنمایت می‌کند.',
+  );
+  String get makeContact => _t('Make a contact', 'ارتباط بگیر');
+  String get qsoInviteTitle =>
+      _t('Ready for the real thing?', 'آماده‌ای برای یک ارتباط واقعی؟');
+  String get qsoInviteBody => _t(
+    'Put it all together in a live CW contact.',
+    'همه چیز را در یک ارتباط زندهٔ مورس کنار هم بگذار.',
+  );
+  String get qsoTheirCallsign => _t('Their callsign', 'شناسهٔ طرف مقابل');
+  String get qsoYourCallsign => _t('Your callsign', 'شناسهٔ تو');
+  String rstMeaning(int r, int st, int? t, {bool shorthand = false}) {
+    final tone = t == null ? '' : _t(', tone $t/9', '، تُن ${n(t)} از ۹');
+    final short = shorthand
+        ? _t(' (5NN is short for 599)', ' (5NN یعنی ۵۹۹)')
+        : '';
+    return _t(
+      'Signal report: readability $r/5, strength $st/9$tone$short',
+      'گزارش سیگنال: خوانایی ${n(r)} از ۵، قدرت ${n(st)} از ۹$tone$short',
+    );
+  }
+
+  String qsoWaiting(QsoIntent? expected) => switch (expected) {
+    QsoIntent.greeting => _t(
+      'They’re calling CQ. Answer them!',
+      'دارند CQ می‌زنند. جوابشان را بده!',
+    ),
+    QsoIntent.report => _t(
+      'They’re waiting for your signal report.',
+      'منتظر گزارش سیگنال تو هستند.',
+    ),
+    QsoIntent.conditions => _t(
+      'Tell them how conditions are on your end.',
+      'بگو شرایط موج سمت تو چطور است.',
+    ),
+    QsoIntent.smalltalk => _t(
+      'Time for a little small talk.',
+      'وقت کمی گپ‌وگفت است.',
+    ),
+    QsoIntent.signOff => _t('Wrap it up with 73.', 'با ۷۳ تمامش کن.'),
+    _ => _t('Contact complete. Nicely done!', 'ارتباط کامل شد. آفرین!'),
+  };
+
+  String qsoHintBody(QsoIntent? expected) => switch (expected) {
+    QsoIntent.greeting => _t(
+      'Send their callsign, then DE (“this is”), then yours. Add a greeting such as GE (good evening) and finish with K (over).',
+      'اول شناسهٔ آن‌ها، بعد DE (یعنی «اینجا»)، بعد شناسهٔ خودت. یک سلام مثل GE (عصر بخیر) هم اضافه کن و با K (تمام) تمامش کن.',
+    ),
+    QsoIntent.report => _t(
+      'Give an RST report: Readability 1–5, Strength 1–9, Tone 1–9. 599, or 5NN for short, means a perfect signal. Repeating it helps through fading.',
+      'یک گزارش RST بده: خوانایی ۱ تا ۵، قدرت ۱ تا ۹، تُن ۱ تا ۹. ۵۹۹ (یا به اختصار 5NN) یعنی سیگنال عالی. تکرارش در محوشدگی کمک می‌کند.',
+    ),
+    QsoIntent.conditions => _t(
+      'Mention fading (QSB), interference (QRM) or static (QRN). If the band is quiet, say CONDX FB.',
+      'از محوشدگی (QSB)، تداخل (QRM) یا نویز جوی (QRN) بگو. اگر موج آرام است بگو CONDX FB.',
+    ),
+    QsoIntent.smalltalk => _t(
+      'Share a little about your station: your rig (RIG), antenna (ANT) or the weather (WX).',
+      'کمی از ایستگاهت بگو: دستگاه (RIG)، آنتن (ANT) یا آب‌وهوا (WX).',
+    ),
+    QsoIntent.signOff => _t(
+      'Thank them (TNX FER QSO), send 73 (best regards) and end with SK (end of contact).',
+      'تشکر کن (TNX FER QSO)، ۷۳ (بهترین آرزوها) بفرست و با SK (پایان ارتباط) تمامش کن.',
+    ),
+    _ => '',
+  };
+
+  String get showMeHow => _t('Show me how', 'نشانم بده چطور');
+  String get gotIt => _t('Got it', 'فهمیدم');
+  String get tryOneOfThese =>
+      _t('Tap an example to use it:', 'روی یک نمونه بزن تا استفاده شود:');
+  String get explain => _t('Explain', 'توضیح');
+  String get whatTheySaid => _t('What they said', 'چه گفتند');
+  String get nothingToDecode => _t(
+    'Plain English: nothing to decode here.',
+    'انگلیسی ساده است؛ چیزی برای رمزگشایی ندارد.',
+  );
+  String get typeYourReply => _t('Type your reply…', 'پاسخت را بنویس…');
+  String get sendReply => _t('Send', 'ارسال');
+  String get endQso => _t('End QSO', 'پایان ارتباط');
+  String get endQsoQuestion => _t('End this contact?', 'این ارتباط تمام شود؟');
+  String get endQsoBody => _t(
+    'It won’t be logged, but you can start a new one any time.',
+    'ثبت نمی‌شود، ولی هر وقت بخواهی می‌توانی ارتباط تازه‌ای شروع کنی.',
+  );
+  String get keepGoing => _t('Keep going', 'ادامه بده');
+  String get newQso => _t('New QSO', 'ارتباط جدید');
+  String get listening => _t('Listening…', 'در حال گوش دادن…');
+  String get tapToReveal => _t('Tap to reveal', 'برای دیدن بزن');
+  String get copyByEar => _t('Copy by ear', 'دریافت با گوش');
+  String get copyByEarSub => _t(
+    'Hide their text until you tap it',
+    'متن آن‌ها تا وقتی رویش نزنی پنهان می‌ماند',
+  );
+  String get playMyMessages => _t('Play my messages', 'پخش پیام‌هایم');
+  String get playMyMessagesSub => _t(
+    'Hear your reply in Morse as you send it',
+    'پاسخت را هنگام ارسال به مورس بشنو',
+  );
+  String get you => _t('You', 'تو');
+  String get callsignHelp => _t(
+    'No licence yet? Keep the practice call. It’s only used in this app.',
+    'هنوز مجوز نداری؟ همین شناسهٔ تمرینی را نگه دار. فقط در همین برنامه استفاده می‌شود.',
+  );
+  String get modeLetters => _t('Letters', 'حروف');
+  String get modeCode => _t('Dots & dashes', 'نقطه و خط');
+  String get keyStyleTwo => _t('Dit & dah', 'دیت و داه');
+  String get keyStyleSingle => _t('Telegraph key', 'کلید تلگراف');
+  String get tapWordToDecode =>
+      _t('Tap a word to decode it', 'روی هر کلمه بزن تا رمزگشایی شود');
+  String get keyYourReply => _t('Key your reply…', 'پاسخت را با کلید بزن…');
+  String get qslTitle => _t('QSO confirmed', 'ارتباط تأیید شد');
+  String qslConfirming(String call) =>
+      _t('Confirming our contact with $call', 'تأیید ارتباط ما با $call');
+  String get yourReport => _t('Your report', 'گزارش تو');
+  String get theirReport => _t('Their report', 'گزارش آن‌ها');
+  String get bandLabel => _t('Band', 'موج');
+  String get operatorLabel => _t('Operator', 'اپراتور');
+  String conditionLabel(BandCondition c) => switch (c) {
+    BandCondition.clear => _t('Clear band', 'موج صاف'),
+    BandCondition.lightQsb => _t('Light fading · QSB', 'محوشدگی کم · QSB'),
+    BandCondition.heavyQsb => _t('Deep fading · QSB', 'محوشدگی شدید · QSB'),
+    BandCondition.qrm => _t('Interference · QRM', 'تداخل · QRM'),
+    BandCondition.qrn => _t('Static · QRN', 'نویز جوی · QRN'),
+  };
+
+  // --- NATO alphabet -------------------------------------------------------
+
+  String get natoMeetTitle =>
+      _t('Meet your new code words', 'با کدواژه‌های جدید آشنا شو');
+  String get natoMeetBody => _t(
+    'Say each one out loud. The stressed syllable is in capitals.',
+    'هر کدام را بلند بگو. هجای تأکیددار با حروف بزرگ نوشته شده.',
+  );
+  String get natoPickWord => _t('Pick the code word', 'کدواژه را انتخاب کن');
+  String get natoPickSymbol =>
+      _t('Which character is this?', 'این کدام حرف است؟');
+  String get natoTypeWord => _t('Type the code word', 'کدواژه را بنویس');
+  String get natoSpell =>
+      _t('Spell it in code words', 'با کدواژه‌ها هجی‌اش کن');
+  String get natoDecode => _t(
+    'What do these code words spell?',
+    'این کدواژه‌ها چه چیزی را هجی می‌کنند؟',
+  );
+  String get natoTypeHint => _t('e.g. KILO', 'مثلاً KILO');
+  String get natoDecodeHint =>
+      _t('Type the word or callsign', 'کلمه یا شناسه را بنویس');
+  String get undo => _t('Undo', 'برگرداندن');
+  String get sayItLikeThis => _t('Say it like this', 'این‌طور تلفظ کن');
+  String get chartNato => _t('NATO', 'ناتو');
+  String get natoChartIntro => _t(
+    'The spelling alphabet used on radios worldwide, so letters can’t be misheard.',
+    'الفبای هجی که در همهٔ رادیوهای دنیا استفاده می‌شود تا حروف اشتباه شنیده نشوند.',
+  );
 
   // --- Koch lessons --------------------------------------------------------
 

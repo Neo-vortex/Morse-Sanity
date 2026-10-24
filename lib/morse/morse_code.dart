@@ -108,6 +108,16 @@ String? encodeToken(String token) {
 /// Returns the character for a Morse pattern such as `.-`, or null.
 String? decodePattern(String pattern) => _reverseTable[pattern];
 
+/// The sendable tokens of each word of [text] (characters and `<XX>`
+/// prosigns), skipping anything without a Morse code. Token order matches
+/// [patternsFor] and the timing produced from it.
+List<List<String>> tokensFor(String text) => text
+    .trim()
+    .split(RegExp(r'\s+'))
+    .map((w) => tokenize(w).where((t) => encodeToken(t) != null).toList())
+    .where((w) => w.isNotEmpty)
+    .toList();
+
 /// Morse patterns for each word of [text], e.g. `CQ DE` ->
 /// `[['-.-.', '--.-'], ['-..', '.']]`. Unknown characters are skipped.
 List<List<String>> patternsFor(String text) => text

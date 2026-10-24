@@ -6,6 +6,7 @@ import '../app_scope.dart';
 import '../course/course.dart';
 import '../course/session_config.dart';
 import '../data/codes.dart';
+import '../data/word_bank.dart' as wb;
 import '../data/words.dart';
 import '../morse/morse_code.dart';
 import '../morse/timing.dart';
@@ -18,6 +19,7 @@ const _punctuation = punctuation;
 const _sentences = sentences;
 const _qCodes = qCodes;
 const _abbreviations = abbreviations;
+const _radioWords = wb.radioWords;
 
 enum ChallengeContent {
   letters('Letters'),
@@ -27,6 +29,7 @@ enum ChallengeContent {
   qCodes('Q-codes'),
   abbreviations('Abbreviations'),
   words('Words'),
+  radioWords('Radio words'),
   callsigns('Callsigns'),
   sentences('Sentences');
 
@@ -44,7 +47,8 @@ enum ChallengeContent {
     prosigns => [for (final p in prosignEntries) p.code],
     qCodes => [for (final q in _qCodes) q.code],
     abbreviations => [for (final a in _abbreviations) a.code],
-    words => englishWords,
+    words => allWords,
+    radioWords => _radioWords,
     callsigns => const [],
     sentences => _sentences,
   };

@@ -61,6 +61,64 @@ const List<CodeEntry> abbreviations = [
   (code: '88', meaning: 'Love and kisses'),
   (code: '5NN', meaning: 'Contest report 599'),
   (code: 'BK', meaning: 'Break'),
+  (code: 'ABT', meaning: 'About'),
+  (code: 'ADR', meaning: 'Address'),
+  (code: 'AGE', meaning: 'Age'),
+  (code: 'ANS', meaning: 'Answer'),
+  (code: 'B4', meaning: 'Before'),
+  (code: 'BCNU', meaning: 'Be seeing you'),
+  (code: 'BTR', meaning: 'Better'),
+  (code: 'BTU', meaning: 'Back to you'),
+  (code: 'CFM', meaning: 'Confirm'),
+  (code: 'CL', meaning: 'Closing station'),
+  (code: 'CLG', meaning: 'Calling'),
+  (code: 'CONDX', meaning: 'Conditions'),
+  (code: 'CPY', meaning: 'Copy'),
+  (code: 'CUAGN', meaning: 'See you again'),
+  (code: 'CW', meaning: 'Continuous wave (Morse)'),
+  (code: 'DR', meaning: 'Dear'),
+  (code: 'DX', meaning: 'Distant station'),
+  (code: 'ENUF', meaning: 'Enough'),
+  (code: 'FER', meaning: 'For'),
+  (code: 'FREQ', meaning: 'Frequency'),
+  (code: 'GD', meaning: 'Good'),
+  (code: 'GL', meaning: 'Good luck'),
+  (code: 'GUD', meaning: 'Good'),
+  (code: 'HI', meaning: 'Laughter'),
+  (code: 'HPE', meaning: 'Hope'),
+  (code: 'HVY', meaning: 'Heavy'),
+  (code: 'INFO', meaning: 'Information'),
+  (code: 'MNI', meaning: 'Many'),
+  (code: 'MSG', meaning: 'Message'),
+  (code: 'N', meaning: 'No'),
+  (code: 'NR', meaning: 'Number / near'),
+  (code: 'NW', meaning: 'Now'),
+  (code: 'OB', meaning: 'Old boy'),
+  (code: 'OP', meaning: 'Operator'),
+  (code: 'OT', meaning: 'Old timer'),
+  (code: 'RCVR', meaning: 'Receiver'),
+  (code: 'RFI', meaning: 'Radio interference'),
+  (code: 'RPT', meaning: 'Repeat / report'),
+  (code: 'RX', meaning: 'Receiver'),
+  (code: 'SIG', meaning: 'Signal'),
+  (code: 'SKED', meaning: 'Schedule'),
+  (code: 'SRI', meaning: 'Sorry'),
+  (code: 'STN', meaning: 'Station'),
+  (code: 'SUM', meaning: 'Some'),
+  (code: 'SWL', meaning: 'Shortwave listener'),
+  (code: 'TEMP', meaning: 'Temperature'),
+  (code: 'TKS', meaning: 'Thanks'),
+  (code: 'TMW', meaning: 'Tomorrow'),
+  (code: 'TRX', meaning: 'Transceiver'),
+  (code: 'TX', meaning: 'Transmitter'),
+  (code: 'U', meaning: 'You'),
+  (code: 'VY', meaning: 'Very'),
+  (code: 'WID', meaning: 'With'),
+  (code: 'WKD', meaning: 'Worked'),
+  (code: 'WL', meaning: 'Well / will'),
+  (code: 'WPM', meaning: 'Words per minute'),
+  (code: 'XYL', meaning: 'Wife'),
+  (code: 'YRS', meaning: 'Years / yours'),
 ];
 
 const List<CodeEntry> prosignEntries = [
@@ -108,6 +166,26 @@ const List<String> sentences = [
   'NAME HR IS ANN',
   'GM OM TNX FER CALL',
   'HW CPY? <BK>',
+  'GOOD EVENING OM',
+  'WX HR IS RAINY',
+  'ANT IS A DIPOLE',
+  'RIG IS A KIT',
+  'PWR IS FIVE WATTS',
+  'THE BAND IS OPEN',
+  'CONDX ARE GOOD TODAY',
+  'I AM NEW TO CW',
+  'SEND SLOWER PLEASE',
+  'HOW IS THE WEATHER',
+  'MY KEY IS A PADDLE',
+  'I LIVE NEAR THE SEA',
+  'THE STORM IS COMING',
+  'LISTEN FOR THE RHYTHM',
+  'WE MEET EVERY MONDAY',
+  'THE CLUB HAS A NET',
+  'QSL VIA BURO',
+  'SRI QRM AGN PSE',
+  'FB OM TNX FER RPT',
+  'GL ES 73 <SK>',
 ];
 
 const _prefixes = [
@@ -161,3 +239,97 @@ String randomCallsign(Random r, {int maxSuffix = 3}) {
   ).join();
   return '$prefix$digit$suffix';
 }
+
+/// Building blocks for generated QSO (contact) exchanges.
+const qsoNames = [
+  'ANN',
+  'BOB',
+  'SAM',
+  'JOE',
+  'LIZ',
+  'TOM',
+  'EVA',
+  'MAX',
+  'ALI',
+  'KIM',
+  'JOHN',
+  'MARY',
+  'PAUL',
+  'NINA',
+  'OMID',
+  'SARA',
+  'HANS',
+  'YUKI',
+  'RAJ',
+  'LEO',
+];
+const qsoPlaces = [
+  'BOSTON',
+  'DENVER',
+  'TEXAS',
+  'OHIO',
+  'LONDON',
+  'PARIS',
+  'BERLIN',
+  'ROME',
+  'TOKYO',
+  'SYDNEY',
+  'TEHRAN',
+  'OSLO',
+  'MADRID',
+  'DUBLIN',
+  'TORONTO',
+  'LIMA',
+];
+const qsoRigs = ['IC 7300', 'K3', 'FT 991', 'KX2', 'QCX', 'HOMEBREW', 'TS 590'];
+const qsoAntennas = ['DIPOLE', 'VERTICAL', 'YAGI', 'LOOP', 'END FED', 'WIRE'];
+const qsoWeather = [
+  'SUNNY',
+  'CLOUDY',
+  'RAINY',
+  'WINDY',
+  'COLD',
+  'WARM',
+  'SNOW',
+];
+
+String _pick(Random r, List<String> xs) => xs[r.nextInt(xs.length)];
+
+String _rst(Random r) => '5${3 + r.nextInt(7)}9';
+
+/// Generated QSO phrases, by stage of a contact.
+String qsoOpener(Random r) {
+  final c = randomCallsign(r);
+  return 'CQ CQ DE $c $c K';
+}
+
+String qsoReport(Random r) {
+  final rst = _rst(r);
+  return r.nextBool() ? 'UR RST $rst $rst' : 'TNX FER CALL UR $rst';
+}
+
+String qsoNamePlace(Random r) => r.nextBool()
+    ? 'NAME HR IS ${_pick(r, qsoNames)}'
+    : 'QTH IS ${_pick(r, qsoPlaces)}';
+
+String qsoStation(Random r) => switch (r.nextInt(4)) {
+  0 => 'RIG HR IS ${_pick(r, qsoRigs)}',
+  1 => 'ANT IS ${_pick(r, qsoAntennas)}',
+  2 => 'PWR IS ${(1 + r.nextInt(10)) * 10} W',
+  _ => 'WX HR IS ${_pick(r, qsoWeather)}',
+};
+
+String qsoSignOff(Random r) => _pick(r, [
+  'TNX FER QSO 73 <SK>',
+  'GL ES 73 CUL <SK>',
+  'TNX ${_pick(r, qsoNames)} 73 <SK>',
+  'HPE CUAGN 73 <SK>',
+]);
+
+String qsoAny(Random r) => switch (r.nextInt(5)) {
+  0 => qsoOpener(r),
+  1 => qsoReport(r),
+  2 => qsoNamePlace(r),
+  3 => qsoStation(r),
+  _ => qsoSignOff(r),
+};

@@ -156,4 +156,53 @@ void main() {
       expect(words.every((w) => RegExp(r'^[KM]{5}$').hasMatch(w)), isTrue);
     });
   });
+
+  group('Radio noise', () {
+    for (final type in NoiseType.values) {
+      test('${type.name} noise fills the silence, within range', () {
+        final wav = ToneGenerator(
+          sampleRate: 8000,
+          noiseLevel: 0.5,
+          noiseType: type,
+          seed: 1,
+        ).render(const [MorseElement(on: false, durationMs: 200)], leadInMs: 0);
+        final samples = Int16List.sublistView(wav, 44);
+        final energy = samples.fold<double>(0, (a, s) => a + s.abs());
+        expect(energy / samples.length, greaterThan(100), reason: type.name);
+        expect(samples.every((s) => s.abs() <= 32767), isTrue);
+      });
+    }
+
+    test('noise is deterministic for a seed and off at zero', () {
+      Uint8List render(double level) => ToneGenerator(
+        sampleRate: 8000,
+        noiseLevel: level,
+        noiseType: NoiseType.pink,
+        seed: 9,
+      ).render(const [MorseElement(on: false, durationMs: 50)], leadInMs: 0);
+      expect(render(0.4), render(0.4));
+      expect(Int16List.sublistView(render(0), 44).every((s) => s == 0), isTrue);
+    });
+  });
+
+  group('Live highlighting', () {
+    test('each element knows which character it belongs to', () {
+      const timing = MorseTiming(charWpm: 20);
+      final tracked = timing.trackedElementsForText('CQ <SK>');
+      expect(tracked.elements.length, tracked.tokenOf.length);
+      final tokens = tokensFor('CQ <SK>');
+      expect(tokens, [
+        ['C', 'Q'],
+        ['<SK>'],
+      ]);
+      expect(tracked.tokenOf.first, 0);
+      expect(tracked.tokenOf.last, 2);
+      expect(tracked.tokenOf.toSet(), {0, 1, 2});
+      // Same sound as the untracked version.
+      expect(
+        tracked.elements.map((e) => e.durationMs).toList(),
+        timing.elementsForText('CQ <SK>').map((e) => e.durationMs).toList(),
+      );
+    });
+  });
 }

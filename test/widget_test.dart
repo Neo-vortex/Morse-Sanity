@@ -7,6 +7,7 @@ import 'package:morse_sanity/services/morse_player.dart';
 import 'package:morse_sanity/services/progress.dart';
 import 'package:morse_sanity/services/settings.dart';
 import 'package:morse_sanity/widgets/morse_keyboard.dart';
+import 'package:morse_sanity/widgets/morse_pattern.dart';
 import 'package:morse_sanity/widgets/motion.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -253,6 +254,139 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Language'), findsOneWidget);
     expect(settings.languageCode, 'en');
+  });
+
+  testWidgets('a coached QSO runs to the QSL card', (tester) async {
+    _reduceMotion(tester);
+    final (app, progress) = await _buildApp();
+    await tester.pumpWidget(app);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Practice'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Make a contact'));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 8)); // their CQ plays
+    expect(find.textContaining('CQ'), findsWidgets);
+
+    // The coach is open the first time; use its first example each turn.
+    for (var turn = 0; turn < 12; turn++) {
+      if (find.text('QSO confirmed').evaluate().isNotEmpty) break;
+      if (find.text('Show me how').evaluate().isNotEmpty) {
+        await tester.tap(find.text('Show me how'));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.byType(ActionChip).first);
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.pump();
+      // Their replies are long; let playback finish at 15 WPM.
+      await tester.pump(const Duration(seconds: 90));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('QSO confirmed'), findsOneWidget);
+    expect(progress.totalXp, 15);
+
+    // Explain the first operator line.
+    await tester.scrollUntilVisible(find.text('Explain').first, -200);
+    await tester.tap(find.text('Explain').first);
+    await tester.pumpAndSettle();
+    expect(find.text('What they said'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('dots & dashes mode: key a reply and decode a word', (
+    tester,
+  ) async {
+    _reduceMotion(tester);
+    final (app, _) = await _buildApp();
+    await tester.pumpWidget(app);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Practice'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Make a contact'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dots & dashes'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 30)); // their CQ plays
+    await tester.pumpAndSettle();
+
+    // Their CQ arrives as code; tapping the first word reveals "CQ".
+    expect(find.text('Tap a word to decode it'), findsOneWidget);
+    expect(find.text('CQ'), findsNothing);
+    final firstWord = find
+        .ancestor(
+          of: find.byType(MorsePattern).first,
+          matching: find.byType(Pressable),
+        )
+        .first;
+    await tester.ensureVisible(firstWord);
+    await tester.pumpAndSettle();
+    await tester.tap(firstWord);
+    await tester.pumpAndSettle();
+    expect(find.text('CQ'), findsOneWidget);
+
+    // Key "T" (dah) then "E" (dit) on the dit/dah buttons.
+    await tester.tap(find.text('DAH'));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('DIT'));
+    await tester.pump(const Duration(seconds: 1));
+    // Keyed letters show above their code in the reply preview.
+    expect(find.text('T'), findsWidgets);
+    expect(find.text('E'), findsWidgets);
+    expect(find.text('Key your reply…'), findsNothing);
+    await tester.pump(const Duration(seconds: 5));
+  }, skip: false);
+
+  testWidgets('a NATO lesson: meet the words, then practise', (tester) async {
+    _reduceMotion(tester);
+    final (app, progress) = await _buildApp();
+    await tester.pumpWidget(app);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('NATO'));
+    await tester.pumpAndSettle();
+    expect(find.text('Alphabet A–I'), findsOneWidget);
+    await tester.tap(find.text('A B C'));
+    await tester.pumpAndSettle();
+    await tester.tap(_chunky('Start'));
+    await tester.pumpAndSettle();
+
+    // Intro cards first.
+    expect(find.text('Meet your new code words'), findsOneWidget);
+    expect(find.text('CHARLIE'), findsOneWidget);
+    await tester.tap(_chunky('Start'));
+    await tester.pumpAndSettle();
+
+    const guesses = ['ALFA', 'BRAVO', 'CHARLIE', 'A', 'B', 'C'];
+    for (var round = 0; round < 12; round++) {
+      await tester.pump(const Duration(milliseconds: 400));
+      if (find.text('Back to map').evaluate().isNotEmpty) break;
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        await tester.enterText(find.byType(TextField), 'ALFA');
+        await tester.tap(_chunky('Check'));
+      } else {
+        // Only tap the answer options, not the prompt above them.
+        final option = guesses
+            .map(
+              (g) => find.descendant(
+                of: find.byType(GridView),
+                matching: find.text(g),
+              ),
+            )
+            .firstWhere((f) => f.evaluate().isNotEmpty);
+        await tester.tap(option);
+      }
+      await tester.pump();
+      final next = _chunky('Continue');
+      if (next.evaluate().isNotEmpty) {
+        await tester.pumpAndSettle();
+        await tester.tap(next);
+      }
+      await tester.pump(const Duration(seconds: 1));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Back to map'), findsOneWidget);
+    expect(progress.totalXp, greaterThan(0));
+    await tester.pump(const Duration(seconds: 3));
   });
 
   test('Persian digits', () {

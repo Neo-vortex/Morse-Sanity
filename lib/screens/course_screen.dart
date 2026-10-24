@@ -6,6 +6,7 @@ import '../app_scope.dart';
 import '../copy/voice.dart';
 import '../course/course.dart';
 import '../course/session_config.dart';
+import '../data/nato.dart';
 import '../morse/morse_code.dart';
 import '../services/progress.dart';
 import '../services/settings.dart';
@@ -13,10 +14,12 @@ import '../theme/app_theme.dart';
 import '../widgets/dit.dart';
 import '../widgets/morse_pattern.dart';
 import '../widgets/motion.dart';
+import '../widgets/on_the_air_card.dart';
 import '../widgets/session_results.dart';
 import 'receive_session_screen.dart';
 import 'send_session_screen.dart';
 import '../l10n/strings.dart';
+import 'nato_session_screen.dart';
 
 bool isLevelUnlocked(Level level, Progress progress, Settings settings) {
   if (settings.unlockAll || level.number == 1) return true;
@@ -53,6 +56,14 @@ void openLevel(BuildContext context, Level level, {bool replace = false}) {
       final onNext = next == null
           ? null
           : () => openLevel(routeContext, next, replace: true);
+      if (l.track == Track.nato) {
+        return NatoSessionScreen(
+          level: l,
+          onFinished: onFinished,
+          onRetry: retry,
+          onNext: onNext,
+        );
+      }
       return l.track == Track.receive
           ? ReceiveSessionScreen(
               config: config,
@@ -85,6 +96,27 @@ void openLevel(BuildContext context, Level level, {bool replace = false}) {
   'Abbreviations' => (icon: Icons.short_text, color: (s, c) => c.streak),
   'Words' => (icon: Icons.menu_book_outlined, color: (s, c) => s.tertiary),
   'Callsigns' => (icon: Icons.cell_tower, color: (s, c) => c.success),
+  'Similar sounds' => (
+    icon: Icons.compare_arrows,
+    color: (s, c) => c.challenge,
+  ),
+  'Mixed review' => (icon: Icons.shuffle, color: (s, c) => c.streak),
+  'Radio words' => (
+    icon: Icons.settings_input_antenna,
+    color: (s, c) => s.secondary,
+  ),
+  'QSO practice' => (icon: Icons.forum_outlined, color: (s, c) => c.success),
+  'Alphabet A–I' => (
+    icon: Icons.looks_one_outlined,
+    color: (s, c) => s.secondary,
+  ),
+  'Alphabet J–R' => (icon: Icons.looks_two_outlined, color: (s, c) => c.streak),
+  'Alphabet S–Z' => (icon: Icons.looks_3_outlined, color: (s, c) => s.tertiary),
+  'Spelling' => (icon: Icons.spellcheck_rounded, color: (s, c) => c.success),
+  'Decoding' => (
+    icon: Icons.manage_search_rounded,
+    color: (s, c) => c.challenge,
+  ),
   _ => (icon: Icons.chat_bubble_outline, color: (s, c) => s.secondary),
 };
 
@@ -187,6 +219,11 @@ class _CourseScreenState extends State<CourseScreen> {
                           label: Text(context.s.send),
                           icon: const Icon(Icons.touch_app),
                         ),
+                        ButtonSegment(
+                          value: Track.nato,
+                          label: Text(context.s.nato),
+                          icon: const Icon(Icons.record_voice_over_outlined),
+                        ),
                       ],
                       selected: {_track},
                       onSelectionChanged: (s) {
@@ -219,6 +256,13 @@ class _CourseScreenState extends State<CourseScreen> {
                 ),
               ),
             ],
+            // After the last section: invite them onto the air.
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: OnTheAirCard(compactTitle: context.s.qsoInviteTitle),
+              ),
+            ),
             const SliverToBoxAdapter(child: SizedBox(height: 32)),
           ],
         );
@@ -632,7 +676,9 @@ class _LevelPreview extends StatelessWidget {
                 children: [
                   for (final item in preview)
                     Pressable(
-                      onTap: () => scope.player.playText(item),
+                      onTap: level.track == Track.nato
+                          ? null
+                          : () => scope.player.playText(item),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -649,7 +695,13 @@ class _LevelPreview extends StatelessWidget {
                               style: theme.textTheme.headlineSmall,
                             ),
                             const SizedBox(height: 6),
-                            MorsePattern(encodeToken(item) ?? '', size: 8),
+                            if (level.track == Track.nato)
+                              Text(
+                                natoBySymbol[item]?.word ?? '',
+                                style: const TextStyle(fontFamily: monoFont),
+                              )
+                            else
+                              MorsePattern(encodeToken(item) ?? '', size: 8),
                           ],
                         ),
                       ),

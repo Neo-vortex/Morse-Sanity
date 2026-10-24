@@ -6,6 +6,7 @@ import '../morse/morse_code.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dit.dart';
 import '../widgets/motion.dart';
+import '../widgets/on_the_air_card.dart';
 import 'custom_challenge_screen.dart';
 import 'learn_screen.dart';
 import 'quiz_screen.dart';
@@ -65,6 +66,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const OnTheAirCard(),
+        const SizedBox(height: 12),
         Pressable(
           scale: 0.97,
           onTap: () => _open(const CustomChallengeScreen()),
@@ -185,9 +188,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
           onTap: () => _open(
             WordCopyScreen(
               title: s.drillTitle(s.copyWords, setLabel),
-              words: _set == CharSet.all
-                  ? practiceWords
-                  : wordsFrom(_characters()),
+              words: _set == CharSet.all ? allWords : wordsFrom(_characters()),
             ),
           ),
         ),

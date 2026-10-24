@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:morse_sanity/course/course.dart';
 import 'package:morse_sanity/course/session_config.dart';
+import 'package:morse_sanity/data/words.dart';
 import 'package:morse_sanity/morse/morse_code.dart';
 
 void main() {
@@ -46,16 +47,48 @@ void main() {
     }
   });
 
-  test('word, code and callsign levels are typed', () {
+  test('character sections use the keyboard, word sections are typed', () {
+    const characters = {
+      'Letters',
+      'Similar sounds',
+      'Punctuation',
+      'Prosigns',
+      'Mixed review',
+    };
+    const typed = {
+      'Q-codes',
+      'Abbreviations',
+      'Words',
+      'Radio words',
+      'Callsigns',
+      'Sentences',
+      'QSO practice',
+    };
     for (final l in courseLevels[Track.receive]!) {
-      final typed = const [
-        'Q-codes',
-        'Abbreviations',
-        'Words',
-        'Callsigns',
-        'Sentences',
-      ].contains(l.section);
-      expect(l.isTyped, typed, reason: '${l.section} ${l.title}');
+      if (characters.contains(l.section)) {
+        expect(l.isTyped, isFalse, reason: '${l.section} ${l.title}');
+      } else if (typed.contains(l.section)) {
+        expect(l.isTyped, isTrue, reason: '${l.section} ${l.title}');
+      }
+    }
+    final numberGroups = courseLevels[Track.receive]!.where(
+      (l) => l.title.startsWith('Number groups'),
+    );
+    expect(numberGroups.every((l) => l.isTyped), isTrue);
+  });
+
+  test('the course is bigger than the competition', () {
+    // Morse Mania lists 270 levels and 52 challenges in total.
+    final all = [for (final t in Track.values) ...courseLevels[t]!];
+    expect(all.length, greaterThan(270));
+    expect(all.where((l) => l.isChallenge).length, greaterThanOrEqualTo(52));
+  });
+
+  test('the word pool is large and Morse-friendly', () {
+    expect(allWords.length, greaterThan(1500));
+    expect(allWords.toSet().length, allWords.length);
+    for (final w in allWords) {
+      expect(RegExp(r'^[A-Z]+$').hasMatch(w), isTrue, reason: w);
     }
   });
 

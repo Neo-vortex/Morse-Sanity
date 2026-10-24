@@ -3,6 +3,18 @@ import 'dart:typed_data';
 
 import 'timing.dart';
 
+/// Colour of the simulated radio noise mixed under the tones.
+enum NoiseType {
+  /// Flat hiss across all frequencies.
+  white,
+
+  /// Softer, rumblier noise with equal energy per octave, like band noise.
+  pink,
+
+  /// White noise shaped to a receiver's audio passband.
+  receiver,
+}
+
 /// Renders Morse elements into a mono 16-bit PCM WAV file in memory.
 class ToneGenerator {
   const ToneGenerator({
@@ -11,6 +23,7 @@ class ToneGenerator {
     this.volume = 0.6,
     this.rampMs = 5,
     this.noiseLevel = 0,
+    this.noiseType = NoiseType.receiver,
     this.seed,
   });
 
@@ -23,6 +36,7 @@ class ToneGenerator {
 
   /// Loudness of band-limited background noise, 0 (off) to 1.
   final double noiseLevel;
+  final NoiseType noiseType;
 
   /// Fixes the noise sequence (for tests).
   final int? seed;
@@ -74,17 +88,32 @@ class ToneGenerator {
   void _addNoise(Int16List pcm) {
     final r = math.Random(seed);
     final amp = noiseLevel.clamp(0.0, 1.0) * 0.6 * 32767;
-    // White noise through a one-pole low-pass and DC-blocking high-pass
-    // gives a hiss resembling a receiver's audio passband.
-    var low = 0.0;
-    var prevLow = 0.0;
-    var high = 0.0;
+    // Filter state: receiver band-pass, and Paul Kellet's pink filter.
+    var low = 0.0, prevLow = 0.0, high = 0.0;
+    var b0 = 0.0, b1 = 0.0, b2 = 0.0, b3 = 0.0, b4 = 0.0, b5 = 0.0, b6 = 0.0;
     for (var i = 0; i < pcm.length; i++) {
       final white = r.nextDouble() * 2 - 1;
-      low += 0.35 * (white - low);
-      high = 0.97 * (high + low - prevLow);
-      prevLow = low;
-      final v = pcm[i] + high * amp * 1.8;
+      final double sample;
+      switch (noiseType) {
+        case NoiseType.white:
+          sample = white * 0.5;
+        case NoiseType.pink:
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          sample = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+          b6 = white * 0.115926;
+        case NoiseType.receiver:
+          // One-pole low-pass plus a DC-blocking high-pass.
+          low += 0.35 * (white - low);
+          high = 0.97 * (high + low - prevLow);
+          prevLow = low;
+          sample = high * 1.8;
+      }
+      final v = pcm[i] + sample * amp;
       pcm[i] = v.clamp(-32768, 32767).round();
     }
   }

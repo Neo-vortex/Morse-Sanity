@@ -6,18 +6,21 @@ import '../data/codes.dart';
 import '../morse/morse_code.dart';
 import '../widgets/morse_pattern.dart';
 import '../l10n/strings.dart';
+import '../data/nato.dart';
 
 enum _ChartView {
   characters,
   prosigns,
   qCodes,
-  abbreviations;
+  abbreviations,
+  nato;
 
   String label(S s) => switch (this) {
     characters => s.chartCharacters,
     prosigns => s.chartProsigns,
     qCodes => s.chartQCodes,
     abbreviations => s.chartAbbreviations,
+    nato => s.chartNato,
   };
 }
 
@@ -63,6 +66,7 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
         if (_view == _ChartView.prosigns) _codeList(prosignEntries),
         if (_view == _ChartView.qCodes) _codeList(qCodes),
         if (_view == _ChartView.abbreviations) _codeList(abbreviations),
+        if (_view == _ChartView.nato) ..._natoSlivers(theme),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
       ],
     );
@@ -114,6 +118,44 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
             delegate: SliverChildBuilderDelegate(
               (context, i) => _CharCard(char: chars[i]),
               childCount: chars.length,
+            ),
+          ),
+        ),
+      ],
+    ];
+  }
+
+  List<Widget> _natoSlivers(ThemeData theme) {
+    final s = context.s;
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        sliver: SliverToBoxAdapter(
+          child: Text(s.natoChartIntro, style: theme.textTheme.bodyMedium),
+        ),
+      ),
+      for (final (title, entries) in [
+        (s.letters, natoLetters),
+        (s.numbers, natoDigits),
+      ]) ...[
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          sliver: SliverToBoxAdapter(
+            child: Text(title, style: theme.textTheme.titleMedium),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 200,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 2.2,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, i) => _NatoTile(entry: entries[i]),
+              childCount: entries.length,
             ),
           ),
         ),
@@ -206,6 +248,70 @@ class _CodeTile extends StatelessWidget {
         ),
         subtitle: Text(context.s.codeMeaning(entry.code, entry.meaning)),
         trailing: const Icon(Icons.volume_up),
+      ),
+    );
+  }
+}
+
+class _NatoTile extends StatelessWidget {
+  const _NatoTile({required this.entry});
+
+  final NatoEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.s;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                entry.symbol,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: scheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FittedBox(
+                    child: Text(
+                      entry.word,
+                      textDirection: TextDirection.ltr,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontFamily: 'JetBrainsMono',
+                      ),
+                    ),
+                  ),
+                  FittedBox(
+                    child: Text(
+                      s.fa ? entry.sayFa : entry.say,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

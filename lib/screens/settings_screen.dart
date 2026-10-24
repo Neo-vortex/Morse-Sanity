@@ -7,6 +7,7 @@ import '../widgets/dit.dart';
 import 'onboarding_screen.dart';
 import '../l10n/strings.dart';
 import '../widgets/language_picker.dart';
+import '../morse/tone_generator.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -156,21 +157,75 @@ class SettingsScreen extends StatelessWidget {
                 divisions: 20,
                 onChanged: (v) => settings.volume = v,
               ),
-              ListTile(
-                title: Text(s.backgroundNoise),
-                subtitle: Text(s.noiseSub),
-                trailing: value(s.percent((settings.noiseLevel * 100).round())),
-              ),
-              Slider(
-                value: settings.noiseLevel,
-                divisions: 20,
-                onChanged: (v) => settings.noiseLevel = v,
-              ),
+
               SwitchListTile(
                 title: Text(s.interfaceSounds),
                 subtitle: Text(s.interfaceSoundsSub),
                 value: settings.interfaceSounds,
                 onChanged: (v) => settings.interfaceSounds = v,
+              ),
+              _SectionHeader(s.radioNoise),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(s.noiseSub),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: SegmentedButton<NoiseType>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: NoiseType.white,
+                      label: Text(s.noiseWhite),
+                    ),
+                    ButtonSegment(
+                      value: NoiseType.pink,
+                      label: Text(s.noisePink),
+                    ),
+                    ButtonSegment(
+                      value: NoiseType.receiver,
+                      label: Text(s.noiseReceiver),
+                    ),
+                  ],
+                  selected: {settings.noiseType},
+                  onSelectionChanged: (v) => settings.noiseType = v.first,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  s.noiseTypeBlurb(settings.noiseType),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              ListTile(
+                title: Text(s.noiseIntensity),
+                trailing: value(
+                  settings.noiseLevel == 0
+                      ? s.noiseOff
+                      : s.percent((settings.noiseLevel * 100).round()),
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Slider(
+                      value: settings.noiseLevel,
+                      divisions: 20,
+                      onChanged: (v) => settings.noiseLevel = v,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 12),
+                    child: FilledButton.tonalIcon(
+                      onPressed: () => scope.player.playText('CQ CQ DE DIT K'),
+                      icon: const Icon(Icons.radio_rounded),
+                      label: Text(s.hearIt),
+                    ),
+                  ),
+                ],
               ),
               _SectionHeader(s.outputModes),
               SwitchListTile(

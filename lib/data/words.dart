@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'word_bank.dart';
+
 /// Common English words plus everyday ham-radio abbreviations and Q-codes.
 const List<String> practiceWords = [
   'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'ANY', 'CAN',
@@ -43,13 +45,23 @@ const List<String> englishWords = [
   'SIGNAL', 'PRACTICE', 'TELEGRAPH',
 ];
 
+/// Every practice word, deduplicated: curated words, Basic English,
+/// frequency-ranked common words and radio vocabulary.
+final List<String> allWords = {
+  ...englishWords,
+  ...basicEnglishWords,
+  ...commonWords,
+  ...radioWords,
+}.toList();
+
 /// Words made only from [chars]. Falls back to random five-character groups
 /// (the classic Koch drill) when too few real words qualify.
 List<String> wordsFrom(Iterable<String> chars, {Random? random, int min = 8}) {
   final set = chars.toSet();
-  final matches = practiceWords
-      .where((w) => w.split('').every(set.contains))
-      .toList();
+  final matches = {
+    ...practiceWords,
+    ...allWords,
+  }.where((w) => w.split('').every(set.contains)).toList();
   if (matches.length >= min) return matches;
   final r = random ?? Random();
   final pool = set.toList();

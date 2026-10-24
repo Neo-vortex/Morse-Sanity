@@ -229,7 +229,7 @@ class _SessionResultsState extends State<SessionResults> {
                       player.playText(m.item, timing: widget.config.timing),
                   title: Text(m.item, style: theme.textTheme.titleLarge),
                   subtitle: Text(
-                    '${encode(m.item)}\n'
+                    '${widget.config.track == Track.nato ? '' : '${encode(m.item)}\n'}'
                     '${widget.config.track == Track.receive ? s.youTyped(m.answer.isEmpty ? '—' : m.answer) : s.youSent(m.answer.isEmpty ? '—' : m.answer)}',
                     style: const TextStyle(fontFamily: monoFont),
                   ),

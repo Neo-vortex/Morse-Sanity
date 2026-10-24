@@ -40,13 +40,26 @@ class MorsePlayer {
 
   /// Plays [text] (which may contain `<XX>` prosigns). [timing] overrides
   /// the speed from settings, e.g. for custom challenges.
-  Future<void> playText(String text, {MorseTiming? timing}) =>
-      _play((timing ?? settings.timing).elementsForText(text));
+  ///
+  /// [onToken] is called with the index of each character (as counted by
+  /// `tokensFor`) as it starts sounding, for live highlighting.
+  Future<void> playText(
+    String text, {
+    MorseTiming? timing,
+    ValueChanged<int>? onToken,
+  }) {
+    final tracked = (timing ?? settings.timing).trackedElementsForText(text);
+    return _play(tracked.elements, tokenOf: tracked.tokenOf, onToken: onToken);
+  }
 
   Future<void> playPattern(String pattern, {MorseTiming? timing}) =>
       _play((timing ?? settings.timing).elementsForPattern(pattern));
 
-  Future<void> _play(List<MorseElement> elements) async {
+  Future<void> _play(
+    List<MorseElement> elements, {
+    List<int>? tokenOf,
+    ValueChanged<int>? onToken,
+  }) async {
     await stop();
     if (elements.isEmpty) return;
     final session = ++_session;
@@ -57,6 +70,7 @@ class MorsePlayer {
         frequency: settings.frequency,
         volume: settings.volume,
         noiseLevel: settings.noiseLevel,
+        noiseType: settings.noiseType,
       ).render(elements, leadInMs: _leadInMs);
       try {
         await _playbackPlayer.play(BytesSource(wav, mimeType: 'audio/wav'));
@@ -83,8 +97,14 @@ class MorsePlayer {
 
     // Walk the same timeline to drive the lamp/torch and know when done.
     await Future<void>.delayed(Duration(milliseconds: _leadInMs.round()));
-    for (final e in elements) {
+    var lastToken = -1;
+    for (var i = 0; i < elements.length; i++) {
+      final e = elements[i];
       if (session != _session) return;
+      if (onToken != null && tokenOf != null && tokenOf[i] != lastToken) {
+        lastToken = tokenOf[i];
+        onToken(lastToken);
+      }
       signal.value = e.on && settings.flashEnabled;
       _setTorch(e.on && settings.torchEnabled);
       await Future<void>.delayed(
@@ -120,7 +140,9 @@ class MorsePlayer {
     if (!audioEnabled || !settings.soundEnabled) return;
     try {
       final player = _sidetone ??= AudioPlayer();
-      final key = '${settings.frequency}/${settings.volume}';
+      final key =
+          '${settings.frequency}/${settings.volume}/'
+          '${settings.noiseLevel}/${settings.noiseType.name}';
       if (_sidetoneKey != key) {
         // A steady tone long enough for any real key press; it is paused on
         // release and rewound on the next press.
@@ -128,6 +150,8 @@ class MorsePlayer {
           frequency: settings.frequency,
           volume: settings.volume,
           rampMs: 3,
+          noiseLevel: settings.noiseLevel,
+          noiseType: settings.noiseType,
         ).render(const [MorseElement(on: true, durationMs: 4000)], leadInMs: 0);
         await player.setReleaseMode(ReleaseMode.stop);
         await player.setSource(BytesSource(wav, mimeType: 'audio/wav'));

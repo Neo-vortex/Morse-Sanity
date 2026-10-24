@@ -237,6 +237,7 @@ class FeedbackPanel extends StatelessWidget {
     required this.answer,
     required this.onContinue,
     this.detail,
+    this.morse = true,
   });
 
   final bool correct;
@@ -244,6 +245,9 @@ class FeedbackPanel extends StatelessWidget {
   final String answer;
   final String? detail;
   final VoidCallback onContinue;
+
+  /// Show the answer's dots and dashes (off for non-Morse answers).
+  final bool morse;
 
   @override
   Widget build(BuildContext context) {
@@ -282,20 +286,21 @@ class FeedbackPanel extends StatelessWidget {
             context.s.answerIs(answer),
             style: theme.textTheme.titleMedium?.copyWith(color: fg),
           ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 14,
-            runSpacing: 6,
-            children: [
-              for (final word in patternsFor(answer))
-                Wrap(
-                  spacing: 6,
-                  children: [
-                    for (final p in word) MorsePattern(p, size: 8, color: fg),
-                  ],
-                ),
-            ],
-          ),
+          if (morse) const SizedBox(height: 6),
+          if (morse)
+            Wrap(
+              spacing: 14,
+              runSpacing: 6,
+              children: [
+                for (final word in patternsFor(answer))
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      for (final p in word) MorsePattern(p, size: 8, color: fg),
+                    ],
+                  ),
+              ],
+            ),
           if (detail != null) ...[
             const SizedBox(height: 6),
             Text(

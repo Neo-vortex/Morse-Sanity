@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/strings.dart';
 import '../morse/keyer.dart';
 import '../morse/timing.dart';
+import '../morse/tone_generator.dart';
 
 /// On-screen keyboard arrangements for typing answers. Changing layout
 /// stops you from memorising key positions instead of sounds.
@@ -75,6 +76,14 @@ class Settings extends ChangeNotifier {
   /// Background noise loudness from 0 (off) to 1.
   double get noiseLevel => _double('noise', 0);
   set noiseLevel(double v) => _setDouble('noise', v);
+
+  /// Colour of the simulated radio noise.
+  NoiseType get noiseType =>
+      NoiseType.values[_int(
+        'noiseType',
+        NoiseType.receiver.index,
+      ).clamp(0, NoiseType.values.length - 1)];
+  set noiseType(NoiseType v) => _setInt('noiseType', v.index);
 
   bool get soundEnabled => _bool('sound', true);
   set soundEnabled(bool v) => _setBool('sound', v);
@@ -147,6 +156,34 @@ class Settings extends ChangeNotifier {
         0,
       ).clamp(0, ThemeMode.values.length - 1)];
   set themeMode(ThemeMode v) => _setInt('themeMode', v.index);
+
+  // --- QSO practice --------------------------------------------------------
+
+  /// The user's callsign for simulated contacts (a practice call if empty).
+  String get callsign => _prefs.getString('settings.callsign') ?? '';
+  set callsign(String v) {
+    _prefs.setString('settings.callsign', v.trim().toUpperCase());
+    notifyListeners();
+  }
+
+  bool get qsoCopyByEar => _bool('qsoCopyByEar', false);
+  set qsoCopyByEar(bool v) => _setBool('qsoCopyByEar', v);
+
+  /// QSO log shows dots and dashes (and you key replies) instead of letters.
+  bool get qsoCodeMode => _bool('qsoCodeMode', false);
+  set qsoCodeMode(bool v) => _setBool('qsoCodeMode', v);
+
+  /// In code mode: one telegraph key instead of separate dit/dah buttons.
+  bool get qsoSingleKey => _bool('qsoSingleKey', false);
+  set qsoSingleKey(bool v) => _setBool('qsoSingleKey', v);
+
+  bool get qsoPlayMine => _bool('qsoPlayMine', true);
+  set qsoPlayMine(bool v) => _setBool('qsoPlayMine', v);
+
+  /// Whether the QSO coach has been shown once (it opens by itself the first
+  /// time).
+  bool get qsoCoachSeen => _bool('qsoCoachSeen', false);
+  set qsoCoachSeen(bool v) => _setBool('qsoCoachSeen', v);
 
   // --- Course --------------------------------------------------------------
 

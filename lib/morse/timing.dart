@@ -58,6 +58,35 @@ class MorseTiming {
     return out;
   }
 
+  /// Like [elementsForText], also returning which token (counting across
+  /// words, as in [tokensFor]) each element belongs to. Gaps belong to the
+  /// token before them.
+  ({List<MorseElement> elements, List<int> tokenOf}) trackedElementsForText(
+    String text,
+  ) {
+    final elements = <MorseElement>[];
+    final tokenOf = <int>[];
+    var token = -1;
+    for (final codes in patternsFor(text)) {
+      if (elements.isNotEmpty) {
+        elements.add(MorseElement(on: false, durationMs: wordGapMs));
+        tokenOf.add(token);
+      }
+      for (var c = 0; c < codes.length; c++) {
+        if (c > 0) {
+          elements.add(MorseElement(on: false, durationMs: charGapMs));
+          tokenOf.add(token);
+        }
+        token++;
+        for (final e in elementsForPattern(codes[c])) {
+          elements.add(e);
+          tokenOf.add(token);
+        }
+      }
+    }
+    return (elements: elements, tokenOf: tokenOf);
+  }
+
   /// Converts a single pattern like `-.-` into on/off intervals.
   List<MorseElement> elementsForPattern(String pattern) {
     final out = <MorseElement>[];
